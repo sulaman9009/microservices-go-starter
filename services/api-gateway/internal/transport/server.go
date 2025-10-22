@@ -42,6 +42,8 @@ func NewHTTPServer(logger *zerolog.Logger) *server {
 }
 
 func (s *server) Start() {
+	s.mountHandlers()
+
 	srv := &http.Server{
 		Addr:    httpAddr,
 		Handler: s.mux,

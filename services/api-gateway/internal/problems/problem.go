@@ -27,3 +27,13 @@ func NewInternal(detail, InternalMsg string) *Problem {
 		InternalDetail: InternalMsg, // detailed for logs
 	}
 }
+
+func NewBadRequest(detail string, InternalMsg string) *Problem {
+	return &Problem{
+		Type:           "https://example.com/probs/bad-request",
+		Title:          "Bad Request",
+		Status:         http.StatusBadRequest,
+		Detail:         detail,
+		InternalDetail: InternalMsg, // detailed for logs
+	}
+}
