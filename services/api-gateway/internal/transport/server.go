@@ -63,8 +63,23 @@ func (s *server) Start() {
 
 func (s *server) ErrorHandler(err error, c echo.Context) {
 	var prob *problems.Problem
-	if errors.As(err, &prob) {
-		// Log internal message if present
+	var echoErr *echo.HTTPError
+
+	switch {
+	case errors.As(err, &echoErr):
+		// Handle Echo HTTP errors
+		status := echoErr.Code
+		detail := fmt.Sprintf("%v", echoErr.Message)
+		prob = &problems.Problem{
+			Type:   "about:blank",
+			Title:  http.StatusText(status),
+			Status: status,
+			Detail: detail,
+		}
+		_ = c.JSON(echoErr.Code, prob)
+		return
+
+	case errors.As(err, &prob):
 		if prob.InternalDetail != "" {
 			s.logger.
 				Error().
@@ -76,16 +91,15 @@ func (s *server) ErrorHandler(err error, c echo.Context) {
 
 		// Send RFC 9457-safe response
 		_ = c.JSON(prob.Status, prob)
-		return
+	default:
+		s.logger.Error().Err(err).Msgf("[ERROR] %v", err)
+		_ = c.JSON(http.StatusInternalServerError, &problems.Problem{
+			Type:   "about:blank",
+			Title:  http.StatusText(http.StatusInternalServerError),
+			Status: http.StatusInternalServerError,
+			Detail: "unexpected server error",
+		})
 	}
-	// Default case for unknown errors
-	s.logger.Error().Err(err).Msgf("[ERROR] %v", err)
-	_ = c.JSON(http.StatusInternalServerError, &problems.Problem{
-		Type:   "about:blank",
-		Title:  http.StatusText(http.StatusInternalServerError),
-		Status: http.StatusInternalServerError,
-		Detail: "unexpected server error",
-	})
 }
 
 func (s *server) waitForShutdown(server *http.Server) error {
