@@ -3,7 +3,6 @@ package transport
 import (
 	"net/http"
 	"ride-sharing/services/api-gateway/internal/problems"
-	util "ride-sharing/services/api-gateway/internal/utils"
 	"ride-sharing/shared/contracts"
 
 	"github.com/labstack/echo/v4"
@@ -14,8 +13,8 @@ func (s *server) previewTrip(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return problems.NewBadRequest("invalid request payload", err.Error())
 	}
-	if err := util.ValidatePayload(&req); err != nil {
-		return problems.NewBadRequest("validation failed", err.Error())
+	if err := c.Validate(&req); err != nil {
+		return err
 	}
 
 	resp := contracts.APIResponse{

@@ -31,12 +31,17 @@ func NewHTTPServer(logger *zerolog.Logger) *server {
 	e.Use(middleware.Recover())
 	e.Use(middleware.Timeout())
 	e.Use(middleware.RequestID())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
+	}))
 
 	srv := &server{
 		mux:    e,
 		logger: logger,
 	}
 	e.HTTPErrorHandler = srv.ErrorHandler
+	e.Validator = NewCustomValidator()
 
 	return srv
 }
@@ -94,7 +99,7 @@ func (s *server) ErrorHandler(err error, c echo.Context) {
 	default:
 		s.logger.Error().Err(err).Msgf("[ERROR] %v", err)
 		_ = c.JSON(http.StatusInternalServerError, &problems.Problem{
-			Type:   "about:blank",
+			Type:   "https://example.com/probs/internal",
 			Title:  http.StatusText(http.StatusInternalServerError),
 			Status: http.StatusInternalServerError,
 			Detail: "unexpected server error",

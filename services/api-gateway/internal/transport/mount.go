@@ -10,4 +10,9 @@ func (s *server) mountHandlers() {
 	trip := s.mux.Group("/trip")
 	trip.POST("/preview", s.previewTrip)
 	trip.POST("/start", s.startTrip)
+
+	// mount driver and rider websocket handlers
+	ws := s.mux.Group("/ws")
+	ws.GET("/rider", s.handleRiderWS)
+	ws.GET("/driver", s.handleDriverWS)
 }
