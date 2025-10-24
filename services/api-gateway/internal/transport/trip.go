@@ -16,7 +16,6 @@ func (s *server) previewTrip(c echo.Context) error {
 	if err := c.Validate(&req); err != nil {
 		return err
 	}
-
 	resp := contracts.APIResponse{
 		Data: "ok",
 	}

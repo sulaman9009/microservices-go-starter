@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package trip.v1;
 
-option go_package = "ride-sharing/gen/go/trip/v1;tripv1";
+option go_package = "ride-sharing/shared/gen/go/trip/v1;tripv1";
 
 service TripService {
   rpc PreviewTrip(PreviewTripRequest) returns (PreviewTripResponse);

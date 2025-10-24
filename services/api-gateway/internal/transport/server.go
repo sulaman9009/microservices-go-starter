@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"ride-sharing/services/api-gateway/internal/grpc_clients"
 	"ride-sharing/services/api-gateway/internal/problems"
 	"ride-sharing/shared/env"
 	"syscall"
@@ -22,11 +23,15 @@ var (
 )
 
 type server struct {
-	mux    *echo.Echo
-	logger *zerolog.Logger
+	mux        *echo.Echo
+	logger     *zerolog.Logger
+	tripClient *grpc_clients.TripServiceClient
 }
 
-func NewHTTPServer(logger *zerolog.Logger) *server {
+func NewHTTPServer(
+	logger *zerolog.Logger,
+	tripClient *grpc_clients.TripServiceClient,
+) *server {
 	e := echo.New()
 	e.Use(middleware.Recover())
 	e.Use(middleware.Timeout())
@@ -37,8 +42,9 @@ func NewHTTPServer(logger *zerolog.Logger) *server {
 	}))
 
 	srv := &server{
-		mux:    e,
-		logger: logger,
+		mux:        e,
+		logger:     logger,
+		tripClient: tripClient,
 	}
 	e.HTTPErrorHandler = srv.ErrorHandler
 	e.Validator = NewCustomValidator()
@@ -54,6 +60,9 @@ func (s *server) Start() {
 		Handler: s.mux,
 	}
 
+	// close grpc clients on shutdown
+	defer s.closeClients()
+
 	s.logger.Info().Msgf("Starting HTTP server on %s", httpAddr)
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -61,6 +70,7 @@ func (s *server) Start() {
 		}
 	}()
 
+	// wait for shutdown signal
 	if err := s.waitForShutdown(srv); err != nil {
 		s.logger.Fatal().Err(err).Msgf("failed to shutdown server correctly")
 	}
@@ -104,6 +114,12 @@ func (s *server) ErrorHandler(err error, c echo.Context) {
 			Status: http.StatusInternalServerError,
 			Detail: "unexpected server error",
 		})
+	}
+}
+
+func (s *server) closeClients() {
+	if err := s.tripClient.Close(); err != nil {
+		s.logger.Error().Err(err).Msg("failed to close trip client")
 	}
 }
 

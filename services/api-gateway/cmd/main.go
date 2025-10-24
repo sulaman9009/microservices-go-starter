@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ride-sharing/services/api-gateway/internal/grpc_clients"
 	"ride-sharing/services/api-gateway/internal/logger"
 	"ride-sharing/services/api-gateway/internal/transport"
 
@@ -15,7 +16,11 @@ func main() {
 }
 
 func run(logger *zerolog.Logger) error {
-	srv := transport.NewHTTPServer(logger)
+	tripClient, err := grpc_clients.NewTripServiceClient()
+	if err != nil {
+		return err
+	}
+	srv := transport.NewHTTPServer(logger, tripClient)
 	srv.Start()
 	return nil
 }
