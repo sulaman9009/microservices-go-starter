@@ -2,8 +2,8 @@ package main
 
 import (
 	"ride-sharing/services/api-gateway/internal/grpc_clients"
-	"ride-sharing/services/api-gateway/internal/logger"
 	"ride-sharing/services/api-gateway/internal/transport"
+	"ride-sharing/shared/logger"
 
 	"github.com/rs/zerolog"
 )
