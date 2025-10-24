@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+package driver.v1;
+
+option go_package = "ride-sharing/gen/go/driver/v1;driverv1";
