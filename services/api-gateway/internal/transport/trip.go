@@ -16,8 +16,14 @@ func (s *server) previewTrip(c echo.Context) error {
 	if err := c.Validate(&req); err != nil {
 		return err
 	}
+
+	tripPreview, err := s.tripClient.Client.PreviewTrip(c.Request().Context(), req.toProto())
+	if err != nil {
+		return problems.NewInternal("failed to preview trip", err.Error())
+	}
+
 	resp := contracts.APIResponse{
-		Data: "ok",
+		Data: tripPreview,
 	}
 	return c.JSON(http.StatusOK, resp)
 }

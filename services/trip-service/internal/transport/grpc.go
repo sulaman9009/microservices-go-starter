@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"ride-sharing/services/trip-service/internal/repository"
+	"ride-sharing/services/trip-service/internal/service"
+	tripv1 "ride-sharing/shared/gen/go/trip/v1"
 	"syscall"
 	"time"
 
@@ -37,6 +40,11 @@ func (s *gRPCServer) Start() error {
 
 	// create server and register services
 	server := grpc.NewServer()
+
+	// register trip service
+	tripRepo := repository.NewInMemRepository()
+	tripService := service.NewTripService(tripRepo)
+	tripv1.RegisterTripServiceServer(server, NewTripGrpcHandler(tripService))
 
 	// listen and serve
 	s.logger.Info().Msgf("server listening on port: %d", grpcPort)

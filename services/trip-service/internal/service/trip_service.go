@@ -31,7 +31,7 @@ func (s *TripService) CreateTrip(ctx context.Context, fare *domain.RideFareModel
 	})
 }
 
-func (s *TripService) GetRoute(ctx context.Context, pickup, destination *types.Coordinate) (*types.OsrmApiResponse, error) {
+func (s *TripService) GetRoute(ctx context.Context, pickup, destination *types.Coordinate) (*domain.OsrmApiResponse, error) {
 	url := fmt.Sprintf(
 		"http://router.project-osrm.org/route/v1/driving/%f,%f;%f,%f?overview=full&geometries=geojson",
 		pickup.Longitude, pickup.Latitude,
@@ -51,7 +51,7 @@ func (s *TripService) GetRoute(ctx context.Context, pickup, destination *types.C
 		return nil, fmt.Errorf("failed to read the response: %v", err)
 	}
 
-	var routeResp types.OsrmApiResponse
+	var routeResp domain.OsrmApiResponse
 
 	if err := json.Unmarshal(body, &routeResp); err != nil {
 		return nil, fmt.Errorf("failed to parse response: %v", err)
