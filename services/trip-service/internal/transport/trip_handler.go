@@ -2,6 +2,7 @@ package transport
 
 import (
 	"context"
+	"fmt"
 	"ride-sharing/services/trip-service/internal/domain"
 	tripv1 "ride-sharing/shared/gen/go/trip/v1"
 	"ride-sharing/shared/types"
@@ -55,6 +56,24 @@ func (h *tripGrpcHandler) PreviewTrip(ctx context.Context, req *tripv1.PreviewTr
 	}, nil
 }
 
-func (h *tripGrpcHandler) CreateTrip(context.Context, *tripv1.CreateTripRequest) (*tripv1.CreateTripResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateTrip not implemented yet")
+func (h *tripGrpcHandler) CreateTrip(ctx context.Context, req *tripv1.CreateTripRequest) (*tripv1.CreateTripResponse, error) {
+	fmt.Println("in func")
+	fareID := req.GetRideFareID()
+	userID := req.GetUserID()
+
+	rideFare, err := h.tripService.GetAndValidateFare(ctx, fareID, userID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to validate the fare: %v", err)
+	}
+
+	trip, err := h.tripService.CreateTrip(ctx, rideFare)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create the trip: %v", err)
+	}
+
+	// Add a comment at the end of the function to publish an event on the Async Comms module.
+
+	return &tripv1.CreateTripResponse{
+		TripID: trip.ID.Hex(),
+	}, nil
 }
