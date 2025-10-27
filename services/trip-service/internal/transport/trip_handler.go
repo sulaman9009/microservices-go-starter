@@ -40,10 +40,18 @@ func (h *tripGrpcHandler) PreviewTrip(ctx context.Context, req *tripv1.PreviewTr
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get route: %v", err)
 	}
+
+	userID := req.GetUserID()
+	estimatedFares := h.tripService.EstimatePackagesPriceWithRoute(route)
+	fares, err := h.tripService.GenerateTripFares(ctx, estimatedFares, userID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to generate the ride fares: %v", err)
+	}
+
 	return &tripv1.PreviewTripResponse{
 		TripID:    "1234",
 		Route:     route.ToProto(),
-		RideFares: []*tripv1.RideFare{},
+		RideFares: domain.ToRideFaresProto(fares),
 	}, nil
 }
 
