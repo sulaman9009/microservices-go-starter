@@ -22,6 +22,14 @@ build:
       docker:
         dockerfile: infra/development/docker/trip-service.Dockerfile
 
+    - image: ride-sharing/driver-service
+      hooks:
+        before:
+          - command: ["sh", "-c", "./infra/development/build.sh --service driver-service"]
+      context: .
+      docker:
+        dockerfile: infra/development/docker/driver-service.Dockerfile
+
     - image: ride-sharing/web
       context: web
       docker:
@@ -42,4 +50,4 @@ portForward:
   - resourceType: deployment
     resourceName: web
     port: 3000
-    localPort: 3000
+    localPort: 3001

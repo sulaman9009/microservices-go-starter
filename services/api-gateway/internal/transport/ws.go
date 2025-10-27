@@ -20,27 +20,36 @@ type driverWSQueryParams struct {
 
 func (s *server) handleRiderWS(c echo.Context) error {
 	ws, err := websocket.Accept(c.Response().Writer, c.Request(), &websocket.AcceptOptions{
-		OriginPatterns: []string{"*"},
+		OriginPatterns:     []string{"*"},
+		InsecureSkipVerify: true, // Only in development
 	})
 	if err != nil {
+		s.logger.Err(err).Msg("websocket accept error")
 		return err
 	}
 	defer ws.CloseNow()
 
 	userID := c.QueryParam("userID")
 	if userID == "" {
+		ws.Close(websocket.StatusUnsupportedData, "userID is required")
 		return problems.NewBadRequest("userID is required", "")
 	}
 
+	ctx := c.Request().Context()
+	s.logger.Info().Str("userID", userID).Msg("rider ws connected")
+
 	for {
-		_, msg, err := ws.Read(c.Request().Context())
+		_, msg, err := ws.Read(ctx)
 		if err != nil {
+			if websocket.CloseStatus(err) == websocket.StatusNormalClosure {
+				s.logger.Info().Str("userID", userID).Msg("rider ws closed normally")
+				return nil
+			}
 			s.logger.Err(err).Msg("error reading from websocket")
-			break
+			return nil
 		}
-		fmt.Printf("received: %s\n", msg)
+		s.logger.Info().Str("userID", userID).Msgf("received: %s", msg)
 	}
-	return nil
 }
 
 func (s *server) handleDriverWS(c echo.Context) error {

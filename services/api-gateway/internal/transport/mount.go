@@ -13,6 +13,6 @@ func (s *server) mountHandlers() {
 
 	// mount driver and rider websocket handlers
 	ws := s.mux.Group("/ws")
-	ws.GET("/rider", s.handleRiderWS)
-	ws.GET("/driver", s.handleDriverWS)
+	ws.GET("/riders", s.handleRiderWS)
+	ws.GET("/drivers", s.handleDriverWS)
 }

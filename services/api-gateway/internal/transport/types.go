@@ -6,7 +6,7 @@ import (
 )
 
 type previewTripRequest struct {
-	UserID      string           `json:"user_id" validate:"required"`
+	UserID      string           `json:"userID" validate:"required"`
 	Pickup      types.Coordinate `json:"pickup" validate:"required"`
 	Destination types.Coordinate `json:"destination" validate:"required"`
 }

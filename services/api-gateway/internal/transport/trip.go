@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"encoding/json"
 	"net/http"
 	"ride-sharing/services/api-gateway/internal/problems"
 	"ride-sharing/shared/contracts"
@@ -10,7 +11,7 @@ import (
 
 func (s *server) previewTrip(c echo.Context) error {
 	var req previewTripRequest
-	if err := c.Bind(&req); err != nil {
+	if err := json.NewDecoder(c.Request().Body).Decode(&req); err != nil {
 		return problems.NewBadRequest("invalid request payload", err.Error())
 	}
 	if err := c.Validate(&req); err != nil {
@@ -30,7 +31,7 @@ func (s *server) previewTrip(c echo.Context) error {
 
 func (s *server) startTrip(c echo.Context) error {
 	var req startTripRequest
-	if err := c.Bind(&req); err != nil {
+	if err := json.NewDecoder(c.Request().Body).Decode(&req); err != nil {
 		return problems.NewBadRequest("invalid request payload", err.Error())
 	}
 	if err := c.Validate(&req); err != nil {
