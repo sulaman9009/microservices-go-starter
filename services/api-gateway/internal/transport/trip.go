@@ -29,5 +29,20 @@ func (s *server) previewTrip(c echo.Context) error {
 }
 
 func (s *server) startTrip(c echo.Context) error {
-	return nil
+	var req startTripRequest
+	if err := c.Bind(&req); err != nil {
+		return problems.NewBadRequest("invalid request payload", err.Error())
+	}
+	if err := c.Validate(&req); err != nil {
+		return err
+	}
+
+	trip, err := s.tripClient.Client.CreateTrip(c.Request().Context(), req.toProto())
+	if err != nil {
+		return problems.NewInternal("failed to start trip", err.Error())
+	}
+	resp := contracts.APIResponse{
+		Data: trip,
+	}
+	return c.JSON(http.StatusOK, resp)
 }

@@ -365,6 +365,102 @@ func (x *RideFare) GetTotalPriceInCents() float64 {
 	return 0
 }
 
+type CreateTripRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RideFareID    string                 `protobuf:"bytes,1,opt,name=rideFareID,proto3" json:"rideFareID,omitempty"`
+	UserID        string                 `protobuf:"bytes,2,opt,name=userID,proto3" json:"userID,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateTripRequest) Reset() {
+	*x = CreateTripRequest{}
+	mi := &file_trip_v1_trip_service_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateTripRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateTripRequest) ProtoMessage() {}
+
+func (x *CreateTripRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_trip_v1_trip_service_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateTripRequest.ProtoReflect.Descriptor instead.
+func (*CreateTripRequest) Descriptor() ([]byte, []int) {
+	return file_trip_v1_trip_service_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *CreateTripRequest) GetRideFareID() string {
+	if x != nil {
+		return x.RideFareID
+	}
+	return ""
+}
+
+func (x *CreateTripRequest) GetUserID() string {
+	if x != nil {
+		return x.UserID
+	}
+	return ""
+}
+
+type CreateTripResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TripID        string                 `protobuf:"bytes,1,opt,name=tripID,proto3" json:"tripID,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateTripResponse) Reset() {
+	*x = CreateTripResponse{}
+	mi := &file_trip_v1_trip_service_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateTripResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateTripResponse) ProtoMessage() {}
+
+func (x *CreateTripResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_trip_v1_trip_service_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateTripResponse.ProtoReflect.Descriptor instead.
+func (*CreateTripResponse) Descriptor() ([]byte, []int) {
+	return file_trip_v1_trip_service_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CreateTripResponse) GetTripID() string {
+	if x != nil {
+		return x.TripID
+	}
+	return ""
+}
+
 var File_trip_v1_trip_service_proto protoreflect.FileDescriptor
 
 const file_trip_v1_trip_service_proto_rawDesc = "" +
@@ -392,9 +488,18 @@ const file_trip_v1_trip_service_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06userID\x18\x02 \x01(\tR\x06userID\x12 \n" +
 	"\vpackageSlug\x18\x03 \x01(\tR\vpackageSlug\x12,\n" +
-	"\x11totalPriceInCents\x18\x04 \x01(\x01R\x11totalPriceInCents2W\n" +
+	"\x11totalPriceInCents\x18\x04 \x01(\x01R\x11totalPriceInCents\"K\n" +
+	"\x11CreateTripRequest\x12\x1e\n" +
+	"\n" +
+	"rideFareID\x18\x01 \x01(\tR\n" +
+	"rideFareID\x12\x16\n" +
+	"\x06userID\x18\x02 \x01(\tR\x06userID\",\n" +
+	"\x12CreateTripResponse\x12\x16\n" +
+	"\x06tripID\x18\x01 \x01(\tR\x06tripID2\x9e\x01\n" +
 	"\vTripService\x12H\n" +
-	"\vPreviewTrip\x12\x1b.trip.v1.PreviewTripRequest\x1a\x1c.trip.v1.PreviewTripResponseB+Z)ride-sharing/shared/gen/go/trip/v1;tripv1b\x06proto3"
+	"\vPreviewTrip\x12\x1b.trip.v1.PreviewTripRequest\x1a\x1c.trip.v1.PreviewTripResponse\x12E\n" +
+	"\n" +
+	"CreateTrip\x12\x1a.trip.v1.CreateTripRequest\x1a\x1b.trip.v1.CreateTripResponseB+Z)ride-sharing/shared/gen/go/trip/v1;tripv1b\x06proto3"
 
 var (
 	file_trip_v1_trip_service_proto_rawDescOnce sync.Once
@@ -408,7 +513,7 @@ func file_trip_v1_trip_service_proto_rawDescGZIP() []byte {
 	return file_trip_v1_trip_service_proto_rawDescData
 }
 
-var file_trip_v1_trip_service_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_trip_v1_trip_service_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_trip_v1_trip_service_proto_goTypes = []any{
 	(*PreviewTripRequest)(nil),  // 0: trip.v1.PreviewTripRequest
 	(*PreviewTripResponse)(nil), // 1: trip.v1.PreviewTripResponse
@@ -416,6 +521,8 @@ var file_trip_v1_trip_service_proto_goTypes = []any{
 	(*Geometry)(nil),            // 3: trip.v1.Geometry
 	(*Route)(nil),               // 4: trip.v1.Route
 	(*RideFare)(nil),            // 5: trip.v1.RideFare
+	(*CreateTripRequest)(nil),   // 6: trip.v1.CreateTripRequest
+	(*CreateTripResponse)(nil),  // 7: trip.v1.CreateTripResponse
 }
 var file_trip_v1_trip_service_proto_depIdxs = []int32{
 	2, // 0: trip.v1.PreviewTripRequest.startLocation:type_name -> trip.v1.Coordinate
@@ -425,9 +532,11 @@ var file_trip_v1_trip_service_proto_depIdxs = []int32{
 	2, // 4: trip.v1.Geometry.coordinates:type_name -> trip.v1.Coordinate
 	3, // 5: trip.v1.Route.geometry:type_name -> trip.v1.Geometry
 	0, // 6: trip.v1.TripService.PreviewTrip:input_type -> trip.v1.PreviewTripRequest
-	1, // 7: trip.v1.TripService.PreviewTrip:output_type -> trip.v1.PreviewTripResponse
-	7, // [7:8] is the sub-list for method output_type
-	6, // [6:7] is the sub-list for method input_type
+	6, // 7: trip.v1.TripService.CreateTrip:input_type -> trip.v1.CreateTripRequest
+	1, // 8: trip.v1.TripService.PreviewTrip:output_type -> trip.v1.PreviewTripResponse
+	7, // 9: trip.v1.TripService.CreateTrip:output_type -> trip.v1.CreateTripResponse
+	8, // [8:10] is the sub-list for method output_type
+	6, // [6:8] is the sub-list for method input_type
 	6, // [6:6] is the sub-list for extension type_name
 	6, // [6:6] is the sub-list for extension extendee
 	0, // [0:6] is the sub-list for field type_name
@@ -444,7 +553,7 @@ func file_trip_v1_trip_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_trip_v1_trip_service_proto_rawDesc), len(file_trip_v1_trip_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

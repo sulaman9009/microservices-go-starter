@@ -46,3 +46,7 @@ func (h *tripGrpcHandler) PreviewTrip(ctx context.Context, req *tripv1.PreviewTr
 		RideFares: []*tripv1.RideFare{},
 	}, nil
 }
+
+func (h *tripGrpcHandler) CreateTrip(context.Context, *tripv1.CreateTripRequest) (*tripv1.CreateTripResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateTrip not implemented yet")
+}
