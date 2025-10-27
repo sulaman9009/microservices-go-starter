@@ -44,7 +44,7 @@ func (h *tripGrpcHandler) PreviewTrip(ctx context.Context, req *tripv1.PreviewTr
 
 	userID := req.GetUserID()
 	estimatedFares := h.tripService.EstimatePackagesPriceWithRoute(route)
-	fares, err := h.tripService.GenerateTripFares(ctx, estimatedFares, userID)
+	fares, err := h.tripService.GenerateTripFares(ctx, estimatedFares, userID, route)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to generate the ride fares: %v", err)
 	}
