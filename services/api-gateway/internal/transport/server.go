@@ -23,14 +23,16 @@ var (
 )
 
 type server struct {
-	mux        *echo.Echo
-	logger     *zerolog.Logger
-	tripClient *grpc_clients.TripServiceClient
+	mux          *echo.Echo
+	logger       *zerolog.Logger
+	tripClient   *grpc_clients.TripServiceClient
+	driverClient *grpc_clients.DriverServiceClient
 }
 
 func NewHTTPServer(
 	logger *zerolog.Logger,
 	tripClient *grpc_clients.TripServiceClient,
+	driverClient *grpc_clients.DriverServiceClient,
 ) *server {
 	e := echo.New()
 	e.Use(middleware.Recover())
@@ -42,9 +44,10 @@ func NewHTTPServer(
 	}))
 
 	srv := &server{
-		mux:        e,
-		logger:     logger,
-		tripClient: tripClient,
+		mux:          e,
+		logger:       logger,
+		tripClient:   tripClient,
+		driverClient: driverClient,
 	}
 	e.HTTPErrorHandler = srv.ErrorHandler
 	e.Validator = NewCustomValidator()
@@ -120,6 +123,9 @@ func (s *server) ErrorHandler(err error, c echo.Context) {
 func (s *server) closeClients() {
 	if err := s.tripClient.Close(); err != nil {
 		s.logger.Error().Err(err).Msg("failed to close trip client")
+	}
+	if err := s.driverClient.Close(); err != nil {
+		s.logger.Error().Err(err).Msg("failed to close driver client")
 	}
 }
 

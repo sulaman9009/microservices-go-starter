@@ -3,10 +3,9 @@ package transport
 import (
 	"context"
 	"fmt"
-	"ride-sharing/services/api-gateway/internal/domain"
 	"ride-sharing/services/api-gateway/internal/problems"
 	"ride-sharing/shared/contracts"
-	"ride-sharing/shared/util"
+	driverv1 "ride-sharing/shared/gen/go/driver/v1"
 
 	"github.com/coder/websocket"
 	"github.com/coder/websocket/wsjson"
@@ -43,13 +42,14 @@ func (s *server) handleRiderWS(c echo.Context) error {
 		if err != nil {
 			if websocket.CloseStatus(err) == websocket.StatusNormalClosure {
 				s.logger.Info().Str("userID", userID).Msg("rider ws closed normally")
-				return nil
+				break
 			}
 			s.logger.Err(err).Msg("error reading from websocket")
-			return nil
+			break
 		}
 		s.logger.Info().Str("userID", userID).Msgf("received: %s", msg)
 	}
+	return nil
 }
 
 func (s *server) handleDriverWS(c echo.Context) error {
@@ -64,21 +64,30 @@ func (s *server) handleDriverWS(c echo.Context) error {
 	if err := (&echo.DefaultBinder{}).BindQueryParams(c, &queryParams); err != nil {
 		return problems.NewBadRequest(err.Error(), "")
 	}
-	fmt.Println("queryparams:", queryParams)
 	if err := c.Validate(&queryParams); err != nil {
 		return err
 	}
 
 	ctx := context.Background()
+	defer func() {
+		s.driverClient.Client.UnregisterDriver(ctx, &driverv1.RegisterDriverRequest{
+			DriverID:    queryParams.UserID,
+			PackageSlug: queryParams.PackageSlug,
+		})
+	}()
+
+	driverData, err := s.driverClient.Client.RegisterDriver(ctx, &driverv1.RegisterDriverRequest{
+		PackageSlug: queryParams.PackageSlug,
+		DriverID:    queryParams.UserID,
+	},
+	)
+	if err != nil {
+		return err
+	}
+
 	msg := contracts.WSMessage{
 		Type: "driver.cmd.register",
-		Data: domain.Driver{
-			ID:             queryParams.UserID,
-			Name:           "Sulaman Ahmad",
-			ProfilePicture: util.GetRandomAvatar(2),
-			CarPlate:       "ABCD-1234",
-			PackageSlug:    queryParams.PackageSlug,
-		},
+		Data: driverData.Driver,
 	}
 
 	if err := wsjson.Write(ctx, ws, msg); err != nil {
@@ -88,6 +97,10 @@ func (s *server) handleDriverWS(c echo.Context) error {
 	for {
 		_, msg, err := ws.Read(c.Request().Context())
 		if err != nil {
+			if websocket.CloseStatus(err) == websocket.StatusNormalClosure {
+				s.logger.Info().Str("userID", queryParams.UserID).Msg("rider ws closed normally")
+				break
+			}
 			s.logger.Err(err).Msg("error reading from websocket")
 			break
 		}

@@ -1,13 +1,14 @@
 package main
 
 import (
-	"fmt"
-	"time"
+	"ride-sharing/services/driver-service/internal/transport"
+	"ride-sharing/shared/logger"
 )
 
 func main() {
-	for {
-		fmt.Println("driver service is running...")
-		time.Sleep(60 * time.Second)
+	logger := logger.New()
+	server := transport.NewGRPCServer(logger)
+	if err := server.Start(); err != nil {
+		logger.Fatal().Err(err).Msg("failed to start trip service")
 	}
 }

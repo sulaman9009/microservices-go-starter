@@ -20,7 +20,11 @@ func run(logger *zerolog.Logger) error {
 	if err != nil {
 		return err
 	}
-	srv := transport.NewHTTPServer(logger, tripClient)
+	driverClient, err := grpc_clients.NewDriverServiceClient()
+	if err != nil {
+		return err
+	}
+	srv := transport.NewHTTPServer(logger, tripClient, driverClient)
 	srv.Start()
 	return nil
 }
