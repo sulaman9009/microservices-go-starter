@@ -8,7 +8,9 @@ import (
 	"os"
 	"os/signal"
 	"ride-sharing/services/driver-service/internal/services"
+	"ride-sharing/shared/env"
 	driverv1 "ride-sharing/shared/gen/go/driver/v1"
+	"ride-sharing/shared/messaging"
 	"syscall"
 	"time"
 
@@ -17,7 +19,8 @@ import (
 )
 
 var (
-	grpcPort = 9092
+	grpcPort    = 9092
+	rabbitmqURI = env.GetString("RABBITMQ_URI", "amqp://guest:guest@localhost:5672/")
 )
 
 type gRPCServer struct {
@@ -39,6 +42,15 @@ func (s *gRPCServer) Start() error {
 
 	// create server and register services
 	server := grpc.NewServer()
+
+	// create messaging client
+	msgClient, err := messaging.NewRabbitMQClient(rabbitmqURI)
+	if err != nil {
+		return err
+	}
+	defer msgClient.Close()
+
+	// register driver service
 	driverService := services.NewDriverService()
 	driverv1.RegisterDriverServiceServer(server, NewDriverGrpcHandler(driverService))
 

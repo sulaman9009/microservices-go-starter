@@ -7,9 +7,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"ride-sharing/services/trip-service/internal/events"
 	"ride-sharing/services/trip-service/internal/repository"
 	"ride-sharing/services/trip-service/internal/service"
+	"ride-sharing/shared/env"
 	tripv1 "ride-sharing/shared/gen/go/trip/v1"
+	"ride-sharing/shared/messaging"
 	"syscall"
 	"time"
 
@@ -18,7 +21,8 @@ import (
 )
 
 var (
-	grpcPort = 9093
+	grpcPort    = 9093
+	rabbitmqURI = env.GetString("RABBITMQ_URI", "amqp://guest:guest@localhost:5672/")
 )
 
 type gRPCServer struct {
@@ -38,13 +42,23 @@ func (s *gRPCServer) Start() error {
 		return err
 	}
 
-	// create server and register services
+	// create server
 	server := grpc.NewServer()
+
+	// create messaging client
+	msgClient, err := messaging.NewRabbitMQClient(rabbitmqURI)
+	if err != nil {
+		return err
+	}
+	defer msgClient.Close()
+
+	// create event publisher
+	publisher := events.NewTripEventPublisher(msgClient)
 
 	// register trip service
 	tripRepo := repository.NewInMemRepository()
 	tripService := service.NewTripService(tripRepo)
-	tripv1.RegisterTripServiceServer(server, NewTripGrpcHandler(tripService))
+	tripv1.RegisterTripServiceServer(server, NewTripGrpcHandler(tripService, publisher))
 
 	// listen and serve
 	s.logger.Info().Msgf("server listening on port: %d", grpcPort)

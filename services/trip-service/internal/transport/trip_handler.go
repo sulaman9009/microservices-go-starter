@@ -13,6 +13,7 @@ import (
 
 type tripGrpcHandler struct {
 	tripService domain.TripService
+	publisher   domain.TripEventPublisher
 
 	// This is embedded for forward compatibility.
 	// It embeds all required methods to satisfy the grpc contract, stubs each method by returning nil, (unimplemented) err.
@@ -20,9 +21,10 @@ type tripGrpcHandler struct {
 	tripv1.UnimplementedTripServiceServer
 }
 
-func NewTripGrpcHandler(tripService domain.TripService) *tripGrpcHandler {
+func NewTripGrpcHandler(tripService domain.TripService, publisher domain.TripEventPublisher) *tripGrpcHandler {
 	return &tripGrpcHandler{
 		tripService: tripService,
+		publisher:   publisher,
 	}
 }
 
@@ -72,6 +74,9 @@ func (h *tripGrpcHandler) CreateTrip(ctx context.Context, req *tripv1.CreateTrip
 	}
 
 	// Add a comment at the end of the function to publish an event on the Async Comms module.
+	if err := h.publisher.PublishTripCreated(ctx); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to publish the trip created event: %v", err)
+	}
 
 	return &tripv1.CreateTripResponse{
 		TripID: trip.ID.Hex(),
