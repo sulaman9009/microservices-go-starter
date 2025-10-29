@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"ride-sharing/services/driver-service/internal/events"
 	"ride-sharing/services/driver-service/internal/services"
 	"ride-sharing/shared/env"
 	driverv1 "ride-sharing/shared/gen/go/driver/v1"
@@ -49,6 +50,14 @@ func (s *gRPCServer) Start() error {
 		return err
 	}
 	defer msgClient.Close()
+
+	// start consumers
+	consumer := events.NewTripConsumer(msgClient)
+	go func() {
+		if err := consumer.Listen(); err != nil {
+			s.logger.Fatal().Err(err).Msg("failed to start trip consumer")
+		}
+	}()
 
 	// register driver service
 	driverService := services.NewDriverService()

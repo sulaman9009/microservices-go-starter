@@ -2,7 +2,6 @@ package transport
 
 import (
 	"context"
-	"fmt"
 	"ride-sharing/services/api-gateway/internal/problems"
 	"ride-sharing/shared/contracts"
 	driverv1 "ride-sharing/shared/gen/go/driver/v1"
@@ -47,7 +46,7 @@ func (s *server) handleRiderWS(c echo.Context) error {
 			s.logger.Err(err).Msg("error reading from websocket")
 			break
 		}
-		s.logger.Info().Str("userID", userID).Msgf("received: %s", msg)
+		s.logger.Info().Msgf("rider ws received: %s", msg)
 	}
 	return nil
 }
@@ -104,7 +103,7 @@ func (s *server) handleDriverWS(c echo.Context) error {
 			s.logger.Err(err).Msg("error reading from websocket")
 			break
 		}
-		fmt.Printf("received: %s\n", msg)
+		s.logger.Info().Msgf("driver ws received: %s", msg)
 	}
 
 	return nil
