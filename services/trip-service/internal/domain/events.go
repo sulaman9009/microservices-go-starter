@@ -1,7 +1,9 @@
 package domain
 
-import "context"
+import (
+	"context"
+)
 
 type TripEventPublisher interface {
-	PublishTripCreated(ctx context.Context) error
+	PublishTripCreated(ctx context.Context, trip *TripModel) error
 }
