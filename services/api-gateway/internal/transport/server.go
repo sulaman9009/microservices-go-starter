@@ -1,0 +1,145 @@
+package transport
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"ride-sharing/services/api-gateway/internal/grpc_clients"
+	"ride-sharing/services/api-gateway/internal/problems"
+	"ride-sharing/shared/env"
+	"syscall"
+	"time"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/rs/zerolog"
+)
+
+var (
+	httpAddr = env.GetString("HTTP_ADDR", ":8081")
+)
+
+type server struct {
+	mux          *echo.Echo
+	logger       *zerolog.Logger
+	tripClient   *grpc_clients.TripServiceClient
+	driverClient *grpc_clients.DriverServiceClient
+}
+
+func NewHTTPServer(
+	logger *zerolog.Logger,
+	tripClient *grpc_clients.TripServiceClient,
+	driverClient *grpc_clients.DriverServiceClient,
+) *server {
+	e := echo.New()
+	e.Use(middleware.Recover())
+	e.Use(middleware.Timeout())
+	e.Use(middleware.RequestID())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
+	}))
+
+	srv := &server{
+		mux:          e,
+		logger:       logger,
+		tripClient:   tripClient,
+		driverClient: driverClient,
+	}
+	e.HTTPErrorHandler = srv.ErrorHandler
+	e.Validator = NewCustomValidator()
+
+	return srv
+}
+
+func (s *server) Start() {
+	s.mountHandlers()
+
+	srv := &http.Server{
+		Addr:    httpAddr,
+		Handler: s.mux,
+	}
+
+	// close grpc clients on shutdown
+	defer s.closeClients()
+
+	s.logger.Info().Msgf("Starting HTTP server on %s", httpAddr)
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			s.logger.Fatal().Err(err).Msg("failed to start server")
+		}
+	}()
+
+	// wait for shutdown signal
+	if err := s.waitForShutdown(srv); err != nil {
+		s.logger.Fatal().Err(err).Msgf("failed to shutdown server correctly")
+	}
+}
+
+func (s *server) ErrorHandler(err error, c echo.Context) {
+	var prob *problems.Problem
+	var echoErr *echo.HTTPError
+
+	switch {
+	case errors.As(err, &echoErr):
+		// Handle Echo HTTP errors
+		status := echoErr.Code
+		detail := fmt.Sprintf("%v", echoErr.Message)
+		prob = &problems.Problem{
+			Type:   "about:blank",
+			Title:  http.StatusText(status),
+			Status: status,
+			Detail: detail,
+		}
+		_ = c.JSON(echoErr.Code, prob)
+		return
+
+	case errors.As(err, &prob):
+		if prob.InternalDetail != "" {
+			s.logger.
+				Error().
+				Err(err).
+				Msgf("[ERROR] %s (status=%d): %s", prob.InternalDetail, prob.Status, prob.Detail)
+		} else {
+			s.logger.Error().Err(err).Msgf("[ERROR] %s (status=%d)", prob.Detail, prob.Status)
+		}
+
+		// Send RFC 9457-safe response
+		_ = c.JSON(prob.Status, prob)
+	default:
+		s.logger.Error().Err(err).Msgf("[ERROR] %v", err)
+		_ = c.JSON(http.StatusInternalServerError, &problems.Problem{
+			Type:   "https://example.com/probs/internal",
+			Title:  http.StatusText(http.StatusInternalServerError),
+			Status: http.StatusInternalServerError,
+			Detail: "unexpected server error",
+		})
+	}
+}
+
+func (s *server) closeClients() {
+	if err := s.tripClient.Close(); err != nil {
+		s.logger.Error().Err(err).Msg("failed to close trip client")
+	}
+	if err := s.driverClient.Close(); err != nil {
+		s.logger.Error().Err(err).Msg("failed to close driver client")
+	}
+}
+
+func (s *server) waitForShutdown(server *http.Server) error {
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+	// block here
+	<-sig
+	s.logger.Info().Msg("shutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		return fmt.Errorf("failed to shutdown server: %w", err)
+	}
+	return nil
+}

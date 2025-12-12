@@ -1,0 +1,53 @@
+apiVersion: skaffold/v4beta13
+kind: Config
+metadata:
+  name: ride-sharing-microservices
+build:
+  tagPolicy:
+    sha256: {}
+  artifacts:
+    - image: ride-sharing/api-gateway
+      hooks:
+        before:
+          - command: ["sh", "-c", "./infra/development/build.sh --service api-gateway"]
+      context: .
+      docker:
+        dockerfile: infra/development/docker/api-gateway.Dockerfile
+
+    - image: ride-sharing/trip-service
+      hooks:
+        before:
+          - command: ["sh", "-c", "./infra/development/build.sh --service trip-service"]
+      context: .
+      docker:
+        dockerfile: infra/development/docker/trip-service.Dockerfile
+
+    - image: ride-sharing/driver-service
+      hooks:
+        before:
+          - command: ["sh", "-c", "./infra/development/build.sh --service driver-service"]
+      context: .
+      docker:
+        dockerfile: infra/development/docker/driver-service.Dockerfile
+
+    # - image: ride-sharing/web
+    #   context: web
+    #   docker:
+    #     dockerfile: infra/development/docker/web.Dockerfile
+
+  local:
+    push: false
+manifests:
+  rawYaml:
+    - infra/development/k8s/*
+deploy:
+  kubectl: {}
+portForward:
+  - resourceType: deployment
+    resourceName: api-gateway
+    port: 8081
+    localPort: 8081
+  # - resourceType: deployment
+  #   resourceName: web
+  #   port: 3000
+  #   localPort: 3001

@@ -5,6 +5,7 @@ dist/
 *.log
 web/.next/
 web/node_modules/
+web/pnpm-lock.yaml
 
 # Exclude editor and OS files
 .idea/
